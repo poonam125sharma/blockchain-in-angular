@@ -1,0 +1,20 @@
+<div style="text-align:center">
+  <h1>
+    Welcome to {{ title }}!
+  </h1>
+</div>
+<div>
+  <h2>
+    Our Current Blockchain
+  </h2>
+  {{ blockchain }}
+</div>
+<div>
+  <h2>
+    Blockchain State : 
+  </h2>
+  <div *ngIf="cryptoSvc.cryptoChain.isChainValid; else invalidBlockchain">
+    Chain is in a <b>Valid</b> state
+  </div>
+  <ng-template #invalidBlockchain>Chain is in an <b>Invalid</b> state</ng-template>  
+</div>
