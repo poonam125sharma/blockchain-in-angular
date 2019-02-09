@@ -1,27 +1,52 @@
 const SHA256 = require('crypto-js/sha256');
 import { Block } from './block.class';
+import { Transaction } from './transaction.class';
 
 export class Blockchain {
-    chain: Block[];
+    chain: Block[] = [];
     difficulty = 3;
+    miningReward: number = 50;
 
     constructor() {
-        this.chain = [ this.createGenesisBlock() ];
+        this.createGenesisBlock();
     }
 
     createGenesisBlock() {
-        return new Block( 0, '05/02/2019', 'Genesis Block', '0' );
+        let txn = new Transaction ( Date.now(), 'mint', 'genesis', 0 );
+        let block = new Block ( Date.now(), [ txn ], '0' );
+        this.chain.push( block );
     }
 
     getLatestBlock() {
         return this.chain[ this.chain.length - 1 ];
     }
 
-    addBlock( newBlock ) {
-        newBlock.previousHash = this.getLatestBlock().hash;
-        // newBlock.hash = newBlock.calculateHash();
-        newBlock.mineBlock( this.difficulty );
-        this.chain.push( newBlock );
+    mineCurrentBlock( minerAddr: string, transactions: Transaction[] ): Promise<any> {
+        transactions.push( new Transaction ( Date.now(), 'mint', minerAddr, this.miningReward ) );
+        let promise = new Promise( ( resolve, reject) => {
+            let block = new Block( Date.now(), transactions, this.getLatestBlock().hash );
+            block.mineBlock( this.difficulty ).then( () => {
+                console.log( 'Current Block successfully mined ');
+                this.chain.push ( block );
+                resolve();
+            } );
+        } );
+        return promise;
+    }
+
+    getAddressBalance( addr ) {
+        let balance = 0;
+        for ( const block of this.chain ) {
+            for ( const txn of block.txns ) {
+                if ( txn.payerAddr === addr ) {
+                    balance = balance - txn.amount;
+                }
+                if( txn.payeeAddr === addr ) {
+                    balance = balance + txn.amount;
+                }
+            }
+        }
+        return balance;
     }
 
     isChainValid() {
